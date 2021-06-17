@@ -22,8 +22,15 @@ private slots:
     void on_horizontalSlider_valueChanged(int value);
     void updateTime();
 
+    void on_actionSkip_empty_turns_changed();
 
-    void on_checkBox_stateChanged(int arg1);
+    void on_actionShip_counter_text_changed();
+
+    void on_pushButton_clicked();
+
+    void on_actionFull_turn_changed();
+
+    void on_pushButton_2_clicked();
 
 private:
     Ui::MainWindow *ui;

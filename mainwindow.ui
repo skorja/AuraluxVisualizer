@@ -19,7 +19,7 @@
      <rect>
       <x>60</x>
       <y>0</y>
-      <width>1061</width>
+      <width>951</width>
       <height>17</height>
      </rect>
     </property>
@@ -55,7 +55,7 @@
    <widget class="QLabel" name="label_2">
     <property name="geometry">
      <rect>
-      <x>1130</x>
+      <x>1010</x>
       <y>0</y>
       <width>58</width>
       <height>16</height>
@@ -65,20 +65,30 @@
      <string>TextLabel</string>
     </property>
    </widget>
-   <widget class="QCheckBox" name="checkBox">
+   <widget class="QPushButton" name="pushButton">
     <property name="geometry">
      <rect>
-      <x>1200</x>
+      <x>1080</x>
       <y>0</y>
-      <width>161</width>
-      <height>20</height>
+      <width>131</width>
+      <height>21</height>
      </rect>
     </property>
     <property name="text">
-     <string>Skip empty turns</string>
+     <string>Skip 100 steps</string>
     </property>
-    <property name="checked">
-     <bool>true</bool>
+   </widget>
+   <widget class="QPushButton" name="pushButton_2">
+    <property name="geometry">
+     <rect>
+      <x>1230</x>
+      <y>0</y>
+      <width>131</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Skip 500 turns</string>
     </property>
    </widget>
   </widget>
@@ -91,6 +101,21 @@
      <height>24</height>
     </rect>
    </property>
+   <widget class="QMenu" name="Turn_counter_text">
+    <property name="title">
+     <string>0</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menuSettings">
+    <property name="title">
+     <string>Settings</string>
+    </property>
+    <addaction name="actionSkip_empty_turns"/>
+    <addaction name="actionShip_counter_text"/>
+    <addaction name="actionFull_turn"/>
+   </widget>
+   <addaction name="menuSettings"/>
+   <addaction name="Turn_counter_text"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -101,6 +126,36 @@
    </attribute>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
+  <action name="actionSkip_empty_turns">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Skip empty turns</string>
+   </property>
+  </action>
+  <action name="actionShip_counter_text">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Ship counter text</string>
+   </property>
+  </action>
+  <action name="actionFull_turn">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Full turn</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources/>
