@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>908</width>
-    <height>471</height>
+    <width>1374</width>
+    <height>631</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,7 +19,7 @@
      <rect>
       <x>60</x>
       <y>0</y>
-      <width>531</width>
+      <width>1061</width>
       <height>17</height>
      </rect>
     </property>
@@ -27,7 +27,7 @@
      <number>1</number>
     </property>
     <property name="maximum">
-     <number>100</number>
+     <number>500</number>
     </property>
     <property name="pageStep">
      <number>1</number>
@@ -55,7 +55,7 @@
    <widget class="QLabel" name="label_2">
     <property name="geometry">
      <rect>
-      <x>600</x>
+      <x>1130</x>
       <y>0</y>
       <width>58</width>
       <height>16</height>
@@ -65,14 +65,30 @@
      <string>TextLabel</string>
     </property>
    </widget>
+   <widget class="QCheckBox" name="checkBox">
+    <property name="geometry">
+     <rect>
+      <x>1200</x>
+      <y>0</y>
+      <width>161</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Skip empty turns</string>
+    </property>
+    <property name="checked">
+     <bool>true</bool>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>908</width>
-     <height>22</height>
+     <width>1374</width>
+     <height>24</height>
     </rect>
    </property>
   </widget>

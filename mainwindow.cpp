@@ -15,6 +15,9 @@ QWidget *par;
 QString fileName;
 std::ifstream fin;
 int N;
+int N_player = 1;
+int pl_now = 1;
+bool skip = true;
 bool game_not_stopped = true;
 QVector<std::pair<int, int>> planets_coord;
 QVector<std::tuple<int, int, int, int>> planet_state;
@@ -51,7 +54,7 @@ MainWindow::MainWindow(QWidget *parent) :
     if (!QFileInfo::exists(fileName)) return;
     try {
         fin.open(fileName.toStdString(), std::ios_base::in);
-        fin >> N;
+        fin >> N >> N_player;
         planets_coord.resize(N);
         planet_state.resize(N);
         distance.resize(N);
@@ -70,7 +73,7 @@ MainWindow::MainWindow(QWidget *parent) :
             {
                 int x = planets_coord[i].first - planets_coord[j].first;
                 int y = planets_coord[i].second - planets_coord[j].second;
-                distance[i][j] = std::sqrt(x * x + y * y);
+                distance[i][j] = std::round(std::sqrt(x * x + y * y));
             }
         }
         for (int i = 0; i < N; ++i)
@@ -109,14 +112,22 @@ void MainWindow::paintEvent(QPaintEvent *event)
     {
         std::tie(x, y) = planets_coord[i];
         std::tie(PlayerId, ShipCount, Level, Armor) = planet_state[i];
-        r = (R * Level) + R / 3;
+        r = (R * Level) + R * 2 / 3;
         QRadialGradient gradient(x, y, r, x, y);
         QColor c = colors[PlayerId];
-        c.setAlphaF(std::max(0.2, std::min(1.0, ShipCount / 100.0)));
+        if (Level == 0)
+        {
+            c.setAlphaF(0.6);
+        }
+        else
+        {
+            c.setAlphaF(std::max(0.2, std::min(1.0, ShipCount / 100.0)));
+        }
         gradient.setColorAt(0, c);
         gradient.setColorAt(1, QColor::fromRgbF(0, 0, 0, 0));
         canv.setBrush(QBrush(gradient));
         canv.drawEllipse(QRect(x - r, y - r, 2 * r, 2 * r));
+        canv.drawText(x - r * 2 - 8, y + r, r * 4 + 16, 16, Qt::AlignCenter, QString::number(ShipCount));
     }
     r = R / 3;
     for (auto [FromPlanetId, ToPlanetId, Count, time, PlayerId]: groups_ship)
@@ -124,6 +135,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
         pen.setColor(colors[PlayerId]);
         canv.setPen(pen);
         std::tie(x, y) = coord_move(FromPlanetId, ToPlanetId, time);
+        canv.drawText(x - r * 2 - 8, y - 2 * R, r * 4 + 16, 16, Qt::AlignCenter, QString::number(Count));
         canv.drawEllipse(QRect(x - r, y - r, 2 * r, 2 * r));
     }
 }
@@ -148,10 +160,10 @@ bool read_next_event()
     for (int i = 0; i < N; ++i)
     {
         fin >> PlayerId >> ShipCount >> Level >> Armor;
-        changed = changed || (Level != std::get<2>(planet_state[i])) ;
+        changed |= (Level != std::get<2>(planet_state[i]));
         planet_state[i] = {PlayerId, ShipCount, Level, Armor};
     }
-    return changed;
+    return changed || !skip;
 }
 
 void move_ships()
@@ -159,27 +171,34 @@ void move_ships()
     QVector<std::tuple<int, int, int, int, int>> groups_ship_new;
     for (auto [FromPlanetId, ToPlanetId, Count, time, PlayerId]: groups_ship)
     {
+        if (PlayerId != pl_now)
+        {
+            groups_ship_new.push_back({FromPlanetId, ToPlanetId, Count, time, PlayerId});
+            continue;
+        }
         if (++time < distance[FromPlanetId][ToPlanetId])
         {
             groups_ship_new.push_back({FromPlanetId, ToPlanetId, Count, time, PlayerId});
         }
     }
+    pl_now = pl_now % N_player + 1;
     groups_ship = groups_ship_new;
 }
 
 void MainWindow::updateTime()
 {
     tmr->setInterval(timer_interval);
+    move_ships();
     bool ch = read_next_event();
     if (game_not_stopped)
     {
-        move_ships();
+        QWidget::repaint();
+
         if (!ch && groups_ship.size() == 0)
         {
             tmr->setInterval(1);
             return;
         }
-        QWidget::update();
     }
     else
     {
@@ -199,3 +218,8 @@ void MainWindow::on_horizontalSlider_valueChanged(int value)
     tmr->setInterval(timer_interval);
 }
 
+
+void MainWindow::on_checkBox_stateChanged(int arg1)
+{
+    skip = arg1;
+}
