@@ -9,22 +9,8 @@
 ```
 git clone https://github.com/skorja/AuraluxVisualizer.git && cd AuraluxVisualizer
 ```
-3) На маке не работеат нормально получение размера окна, поэтому придётся полезть в код.
-Откройте файл ```mainwindow.cpp``` и найдите там строки
-```
-    std::ifstream conf("viz.conf");
-    conf >> w >> h >> R;
-    this->resize(w, h);
-    conf.close();
-```
-Как показал опыт, работает замена этих 4 строк на такие строки:
-```
-    w = 700;
-    h = 450;
-    R = 9;
-    this->resize(w, h);
-```
-5) Установите всё. Зайдите в папку ```AuraluxVisualizer``` и запустите
+
+3) Установите всё. Зайдите в папку ```AuraluxVisualizer``` и запустите
 ```
 qmake AuraluxVisualizer.pro -o Makefile && make
 ```
