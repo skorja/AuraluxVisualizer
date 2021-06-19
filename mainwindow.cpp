@@ -28,6 +28,7 @@ int turn_counter = 0;
 Ui::MainWindow * uii;
 QVector<QLabel *> players_score;
 QVector<QPair<int, int>> score;
+QVector<int> last_order;
 QVector<std::pair<int, int>> planets_coord_real;
 QVector<std::pair<int, int>> planets_coord;
 QVector<std::tuple<int, int, int, int>> planet_state;
@@ -127,7 +128,8 @@ MainWindow::MainWindow(QWidget *parent) :
         ui->gridLayout->addLayout(layout_label, 1, 5);
         for (int i = 0; i < N_player; ++i)
         {
-            players_score.push_back(new QLabel(QString("  1 - 100"), this));
+            players_score.push_back(new QLabel(QString("(%1)  1 - 100").arg(i + 1, 2, 10, QChar(' ')), this));
+            last_order.push_back(i);
             QPalette sample_palette;
             sample_palette.setColor(QPalette::Window, colors[i + 1]);
             players_score.last()->setPalette(sample_palette);
@@ -179,10 +181,29 @@ std::pair<int, int> coord_move(int from, int to, int time)
 void MainWindow::paintEvent(QPaintEvent *event)
 {
     if (skip_step) return;
+    QVector<QPair<int, int>> sorted_players;
     for (int i = 1; i <= N_player; ++i)
     {
-        players_score[i - 1]->setText(QString("%1 - %2").arg(score[i].first, 3, 10, QChar(' ')).arg(score[i].second));
+        sorted_players.push_back(qMakePair(score[i].second, -i));
     }
+    std::sort(sorted_players.begin(), sorted_players.end(), std::greater<QPair<int, int>>());
+    QVector<int> current_order(N_player);
+    for (int i = 0; i < N_player; ++i)
+    {
+        current_order[i] = -sorted_players[i].second;
+    }
+    for (int i = 0; i < N_player; ++i)
+    {
+        players_score[i]->setText(QString("(%1) %2 - %3").arg(current_order[i], 2, 10, QChar(' ')).arg(score[current_order[i]].first, 3, 10, QChar(' ')).arg(score[current_order[i]].second));
+        if (last_order[i] != current_order[i])
+        {
+            QPalette sample_palette;
+            sample_palette.setColor(QPalette::Window, colors[current_order[i]]);
+            players_score[i]->setPalette(sample_palette);
+        }
+    }
+    last_order = current_order;
+
     QPainter canv(this);
     QPen pen;
     pen.setColor(Qt::black);
