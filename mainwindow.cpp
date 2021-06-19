@@ -23,8 +23,12 @@ bool game_not_stopped = true;
 bool full_turn = false;
 bool skip_step = false;
 int skip_next_X_steps = 0;
+int skip_next_X_turn = 0;
 int turn_counter = 0;
 Ui::MainWindow * uii;
+QVector<QLabel *> players_score;
+QVector<QPair<int, int>> score;
+QVector<std::pair<int, int>> planets_coord_real;
 QVector<std::pair<int, int>> planets_coord;
 QVector<std::tuple<int, int, int, int>> planet_state;
 QVector<std::tuple<int, int, int, int, int>> groups_ship;
@@ -36,7 +40,7 @@ QBrush ship_br = Qt::SolidPattern;
 std::pair<int, int> realcoord(int x, int y)
 {
     int n_x = x * (W - 6 * R) / mx_x + 3 * R + 10;
-    int n_y = y * (H - 6 * R - 30) / mx_y + 3 * R + 40;
+    int n_y = y * (H - 6 * R - 30) / mx_y + 3 * R + 70;
     return {n_x, n_y};
 }
 
@@ -48,26 +52,14 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     ui->label_2->setText("3");
     par = parent;
-    int w, h;
-    try {
-        std::ifstream conf("viz.conf");
-        conf >> w >> h >> R;
-        conf.close();
-    } catch (...) {
-        w = 900;
-        h = 600;
-    }
-    this->resize(w, h);
-    W = this->size().width() - 20;
-    H = this->size().height() - 40;
-    // ui->label_2->setText(QString::number(H));
+    this->resize(600, 600);
     fileName = QFileDialog::getOpenFileName(this);
     QFile tmp(fileName);
     if (!QFileInfo::exists(fileName)) return;
     try {
         fin.open(fileName.toStdString(), std::ios_base::in);
         fin >> N >> N_player;
-        if (N_player > 1)
+        if (N_player > 4)
         {
             colors.push_back(QColor("#7FFFD4"));
             colors.push_back(QColor("#E32636"));
@@ -126,30 +118,44 @@ MainWindow::MainWindow(QWidget *parent) :
             colors.push_back(QColor("#1B5583"));
             colors.push_back(QColor("#FF0033"));
         }
+        planets_coord_real.resize(N);
         planets_coord.resize(N);
         planet_state.resize(N);
+        score.resize(N_player + 1);
         distance.resize(N);
+        QVBoxLayout * layout_label = new QVBoxLayout(this);
+        ui->gridLayout->addLayout(layout_label, 1, 5);
+        for (int i = 0; i < N_player; ++i)
+        {
+            players_score.push_back(new QLabel(QString("  1 - 100"), this));
+            QPalette sample_palette;
+            sample_palette.setColor(QPalette::Window, colors[i + 1]);
+            players_score.last()->setPalette(sample_palette);
+            players_score.last()->setAutoFillBackground(true);
+            layout_label->addWidget(players_score.last());
+        }
+
         for (int i = 0; i < N; ++i)
         {
             int x, y;
             fin >> x >> y;
             if (mx_x < x) mx_x = x;
             if (mx_y < y) mx_y = y;
-            planets_coord[i] = {x, y};
+            planets_coord_real[i] = {x, y};
         }
         for (int i = 0; i < N; ++i)
         {
             distance[i].resize(N);
             for (int j = 0; j < N; ++j)
             {
-                int x = planets_coord[i].first - planets_coord[j].first;
-                int y = planets_coord[i].second - planets_coord[j].second;
+                int x = planets_coord_real[i].first - planets_coord_real[j].first;
+                int y = planets_coord_real[i].second - planets_coord_real[j].second;
                 distance[i][j] = std::round(std::sqrt(x * x + y * y));
             }
         }
         for (int i = 0; i < N; ++i)
         {
-            planets_coord[i] = realcoord(planets_coord[i].first, planets_coord[i].second);
+            planets_coord[i] = realcoord(planets_coord_real[i].first, planets_coord_real[i].second);
         }
         tmr = new QTimer();
         tmr->setInterval(timer_interval);
@@ -173,6 +179,10 @@ std::pair<int, int> coord_move(int from, int to, int time)
 void MainWindow::paintEvent(QPaintEvent *event)
 {
     if (skip_step) return;
+    for (int i = 1; i <= N_player; ++i)
+    {
+        players_score[i - 1]->setText(QString("%1 - %2").arg(score[i].first, 3, 10, QChar(' ')).arg(score[i].second));
+    }
     QPainter canv(this);
     QPen pen;
     pen.setColor(Qt::black);
@@ -217,6 +227,18 @@ void MainWindow::paintEvent(QPaintEvent *event)
     }
 }
 
+void MainWindow::resizeEvent(QResizeEvent* event)
+{
+    QMainWindow::resizeEvent(event);
+    W = this->size().width() - 150;
+    H = this->size().height() - 80;
+    for (int i = 0; i < N; ++i)
+    {
+        planets_coord[i] = realcoord(planets_coord_real[i].first, planets_coord_real[i].second);
+    }
+    R = std::min(W, H) / 100;
+}
+
 bool read_next_event()
 {
     uii->Turn_counter_text->setTitle(QString::number(++turn_counter) + '/' + QString::number(turn_counter / N_player));
@@ -232,12 +254,15 @@ bool read_next_event()
     {
         fin >> PlayerId >> FromPlanetId >> ToPlanetId >> Count;
         groups_ship.push_back({--FromPlanetId, --ToPlanetId, Count, 0, PlayerId});
+        score[PlayerId].second += Count;
     }
     int ShipCount, Level, Armor;
     bool changed = false;
     for (int i = 0; i < N; ++i)
     {
         fin >> PlayerId >> ShipCount >> Level >> Armor;
+        score[PlayerId].second += ShipCount;
+        score[PlayerId].first += Level;
         changed |= (Level != std::get<2>(planet_state[i]));
         planet_state[i] = {PlayerId, ShipCount, Level, Armor};
     }
@@ -252,11 +277,13 @@ void move_ships()
         if (PlayerId != pl_now)
         {
             groups_ship_new.push_back({FromPlanetId, ToPlanetId, Count, time, PlayerId});
+            score[PlayerId].second += Count;
             continue;
         }
-        if (++time < distance[FromPlanetId][ToPlanetId])
+        if (++time + skip_next_X_turn < distance[FromPlanetId][ToPlanetId])
         {
             groups_ship_new.push_back({FromPlanetId, ToPlanetId, Count, time, PlayerId});
+            score[PlayerId].second += Count;
         }
     }
     pl_now = pl_now % N_player + 1;
@@ -265,7 +292,9 @@ void move_ships()
 
 void MainWindow::updateTime()
 {
+    std::fill(score.begin(), score.end(), qMakePair(0, 0));
     tmr->setInterval(timer_interval);
+    skip_next_X_steps / N_player;
     move_ships();
     bool ch = read_next_event();
     if (game_not_stopped)

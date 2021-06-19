@@ -16,6 +16,8 @@ public:
     ~MainWindow();
 
     virtual void paintEvent(QPaintEvent *event);
+
+    virtual void resizeEvent(QResizeEvent* event);
     QTimer *tmr;
 
 private slots:
