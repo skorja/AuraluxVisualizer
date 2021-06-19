@@ -45,6 +45,10 @@ std::pair<int, int> realcoord(int x, int y)
     return {n_x, n_y};
 }
 
+QString get_score_label_text(int PlayerId, int PlanetCount, int ShipCount) {
+    return QString("%1. %2 - %3").arg(PlayerId, 2, 10, QChar(' ')).arg(PlanetCount, 3, 10, QChar(' ')).arg(ShipCount);
+}
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -128,7 +132,7 @@ MainWindow::MainWindow(QWidget *parent) :
         ui->gridLayout->addLayout(layout_label, 1, 5);
         for (int i = 0; i < N_player; ++i)
         {
-            players_score.push_back(new QLabel(QString("(%1)  1 - 100").arg(i + 1, 2, 10, QChar(' ')), this));
+            players_score.push_back(new QLabel(get_score_label_text(i + 1, 1, 100), this));
             last_order.push_back(i);
             QPalette sample_palette;
             sample_palette.setColor(QPalette::Window, colors[i + 1]);
@@ -194,7 +198,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
     }
     for (int i = 0; i < N_player; ++i)
     {
-        players_score[i]->setText(QString("(%1) %2 - %3").arg(current_order[i], 2, 10, QChar(' ')).arg(score[current_order[i]].first, 3, 10, QChar(' ')).arg(score[current_order[i]].second));
+        players_score[i]->setText(get_score_label_text(current_order[i], score[current_order[i]].first, score[current_order[i]].second));
         if (last_order[i] != current_order[i])
         {
             QPalette sample_palette;
